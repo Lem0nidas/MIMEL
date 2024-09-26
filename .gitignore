@@ -1,0 +1,7 @@
+.vscode/
+venv/
+
+raw.xlsx
+trig.txt
+
+final.ipynb
