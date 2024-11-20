@@ -22,7 +22,6 @@ def main():
 
     all_targets_dict = dict()
 
-    # Move to first sheet
     sheets = wb.sheetnames
 
     for i in sheets:
@@ -30,8 +29,8 @@ def main():
         wb.active = wb[i]
         ws = wb.active
 
-        # Find the last row with actual data
-        for row_idx in range(ws.max_row, 0, -1):  # Iterate from last row to the first
+
+        for row_idx in range(ws.max_row, 0, -1):
             row = ws[row_idx]
             if not is_row_empty(row):
                 last_non_empty_row = row_idx
@@ -40,7 +39,7 @@ def main():
         all_dates_dict = dict()
 
         for k in range(newDates, 0, -1):
-            row = ws[last_non_empty_row - k + 1]  # Get the k-th row from the bottom
+            row = ws[last_non_empty_row - k + 1]
 
             list_for_date = [cell.value for cell in row]
             all_dates_dict[k] = list_for_date
@@ -52,11 +51,8 @@ def main():
     wb.close()
 
 
-    #############
-
     wb = load_workbook(destination_entry.get())
 
-    # Move to first sheet
     sheets = wb.sheetnames
 
     for i in sheets:
@@ -64,16 +60,14 @@ def main():
         wb.active = wb[i]
         ws = wb.active
 
-        # Find the last row with actual data
-        for row_idx in range(ws.max_row, 0, -1):  # Iterate from last row to the first
+        for row_idx in range(ws.max_row, 0, -1):
             row = ws[row_idx]
             if not is_row_empty(row):
                 last_non_empty_row = row_idx
                 break
 
-        # Write `newDates` rows from all_targets_dict to the target sheet
         for k in range(newDates, 0, -1):
-            source_row_data = all_targets_dict[i][k]  # Get the k-th row from the dictionary
+            source_row_data = all_targets_dict[i][k]
             max_col = len(source_row_data)
 
             for col in range(1, max_col + 1):
@@ -99,7 +93,7 @@ def main():
 def is_row_empty(row):
     """Check if a row contains only NaN or empty values."""
     for cell in row:
-        if cell.value not in (None, '', np.nan):  # Check for non-empty values
+        if cell.value not in (None, '', np.nan):
             return False
     return True
 
@@ -122,16 +116,13 @@ def browse_save_location():
         save_location_entry.insert(0, filename)
 
 
-# Create the main window
 root = tk.Tk()
 root.title("Update Excel file with equations.")
 messagebox.showinfo(title="Reminder", message="Before you copy data to excel file, make sure you have a copy of that excel stored somewhere!")
 
 
-# Set geometry
 root.geometry("800x300")
 
-# Configure grid weights to make the window responsive
 root.grid_columnconfigure(0, weight=1)
 root.grid_columnconfigure(1, weight=3)
 root.grid_columnconfigure(2, weight=1)
@@ -144,7 +135,6 @@ root.grid_rowconfigure(5, weight=1)
 
 
 
-# Origin Excel
 origin_label = tk.Label(root, text="Origin Excel")
 origin_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 origin_entry = tk.Entry(root, width=50)
@@ -152,7 +142,6 @@ origin_entry.grid(row=0, column=1, padx=10, pady=10, sticky="we")
 origin_button = tk.Button(root, text="Browse", command=browse_origin_excel)
 origin_button.grid(row=0, column=2, padx=10, pady=10)
 
-# Destination Excel
 destination_label = tk.Label(root, text="Destination Excel")
 destination_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 destination_entry = tk.Entry(root, width=50)
@@ -160,7 +149,6 @@ destination_entry.grid(row=1, column=1, padx=10, pady=10, sticky="we")
 destination_button = tk.Button(root, text="Browse", command=browse_destination_excel)
 destination_button.grid(row=1, column=2, padx=10, pady=10)
 
-# Save Location
 save_location_label = tk.Label(root, text="Save Location")
 save_location_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 save_location_entry = tk.Entry(root, width=50)
@@ -169,17 +157,15 @@ save_location_button = tk.Button(
     root, text="Browse", command=browse_save_location)
 save_location_button.grid(row=2, column=2, padx=10, pady=10)
 
-# Create a Combobox with a few options
 monitoringAreas = ["1", "2", "3", "4", "5", "6", "7", "8"]
 dropdown_label = tk.Label(root, text="Number of dates/measurements")
 dropdown_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
 combobox = ttk.Combobox(root, values=monitoringAreas, width=20)
 combobox.grid(row=4, column=1, padx=10, pady=10, sticky="we")
-combobox.set("Select an option")  # Default text
+combobox.set("Select an option")
 
 
 
-# Execution and Cancel buttons
 execute_button = tk.Button(root, text="Execute", command=main)
 execute_button.grid(row=5, column=1, padx=10, pady=10, sticky="e")
 
@@ -187,5 +173,4 @@ cancel_button = tk.Button(root, text="Cancel", command=root.quit)
 cancel_button.grid(row=5, column=2, padx=10, pady=10, sticky="w")
 
 
-# Run the application
 root.mainloop()
