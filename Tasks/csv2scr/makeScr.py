@@ -1,4 +1,5 @@
 import os
+import sys
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
@@ -18,10 +19,13 @@ def check_name_input(func):
 
 @check_name_input
 def main():
+    coords_path = load_control_points()
+
     filename = file_name.get()
     file = "".join([filename, ".scr"])
 
     with open(file, "w"):
+        f.write("OSMODE 0 3DOSMODE 0\n")
         pass
     
     with open(file_path_var.get(), "r") as excel:
@@ -34,26 +38,67 @@ def main():
                 items = line.split(",")
                 pointID, x, y, z, layer = (items + [None] * 5)[:5]  # Fill missing values with None
                 coordinate = ",".join([x,y,z])
+
+                pointID = pointID.strip('" ')
+                layer = layer.strip('" \n')
             except Exception as e:
                 messagebox.showwarning(f"Error processing line: {line} - {e}")
                 on_close()
 
-            if layer != None:
-                layer = layer.strip()
+            if len(layer) > 0:
+                layer_command = check_layer(layer)
+                coord_check = "No control point found in csv"
             else:
-                controlPoints.append((pointID, coordinate))
-                layer = "ST"
+                idCoords = control_point_coords(coords_path, pointID.upper())
+                if idCoords:
+                    
+                    controlPoints.append((pointID, coordinate))
+                    rounded_coords = [str(round(float(i), 3)) for i in idCoords]
+                    
+                    if (",".join(rounded_coords) == coordinate):
+                        coord_check = "The control point is valid (It's coordinates is included in FINAL_COORDS_TR)"
+                    else:
+                        coord_check = "The control point is NOT valid (Coordinates DO NOT match in FINAL_COORDS_TR)"
+
+                    layer_command = "-LAYER M TX_Point_Name_ST \n"
+                else:
+                    coord_check = "The control point was not found in FINAL_COORDS_TR"
+                    layer_command = "-LAYER M TX_Point_Name_STK \n"
 
             with open(file, "a") as f:
-                f.write(f"-LAYER S TX_Point_Name_{layer.upper()} \n")
+                f.write(layer_command)
                 f.write(f"POINT {coordinate}\n")
                 f.write(f"TEXT {coordinate} 0.4 100 {pointID}\n")
 
-    messagebox.showinfo(title="Csv Data Info", message=
-                        f"Number of points: {number_of_points}"
-                        f"Probable control points and it's coordinates: {controlPoints}"
-                        )
+    report = f"Number of points: {number_of_points}\nControl points and it's coordinates: \n{controlPoints}\n" + coord_check
+
+    messagebox.showinfo(title="Csv Data Info", message=report)
     return
+
+def load_control_points():
+    if getattr(sys, "frozen", False):
+        # If the script is frozen (converted to an .exe)
+        bundle_dir = sys._MEIPASS
+        coords_path = os.path.join(bundle_dir, 'ALL_COORDS.txt')
+    else:
+        coords_path = 'Data/ALL_COORDS.txt'
+
+    return coords_path
+
+def control_point_coords(file_path, search_id):
+    with open(file_path, 'r') as file:
+        for line in file:
+            values = line.split(',')
+            if values[0] == search_id:
+                return (values[1], values[2], values[3])
+    return None
+
+
+def check_layer(description):
+    if (description.upper() in ["PD", "FR", "TX"]):
+        return f"-LAYER S TX_Point_Name_{description.upper()} \n"
+    return f"-LAYER M TX_Point_Name_{description.upper()} \n"
+
 
 def browse_file():
     filename = filedialog.askopenfilename(
