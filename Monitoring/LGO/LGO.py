@@ -56,7 +56,7 @@ def copy_to_equations_excel(rawData):
     global dates
     global LGORepeatTargets
 
-    LGORepeatTargets = ["LG1", "LG9", "LG10", "LG25", "LG26", "LG27", "LG28", "LG37", "LG40", "LG41", "SKP46N"]
+    LGORepeatTargets = ["LG1", "LG3", "LG9", "LG25", "LG26", "LG27", "LG28", "LG37", "LG38", "LG41", "SKP46N", "PT2", "PT3"]
 
     excel_file_path = excel_entry.get()
     measurementTime = combobox.get()
@@ -137,7 +137,6 @@ def repeats(rawData):
             index = 0
 
             for eachDay in allDays:
-                # Check if 'day' is an iterable and has exactly 3 elements
                 if isinstance(eachDay, (list, tuple, np.ndarray)) and len(eachDay) == 3:
                     x, y, z = eachDay
 

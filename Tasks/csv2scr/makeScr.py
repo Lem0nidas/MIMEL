@@ -3,6 +3,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
+from tkinterdnd2 import TkinterDnD, DND_FILES
 
 
 
@@ -12,7 +13,7 @@ def check_name_input(func):
             messagebox.showwarning(title= "Wrong Input", message="Please choose a script file name.")
             return
 
-        if (len(file_path_box.get()) == 0):
+        if (len(file_path_box.get('1.0', 'end').strip()) == 0):
             messagebox.showwarning(title= "Wrong Input", message="Please choose a valid csv file.")
         return func(*args, **kwargs)
     return wrapper
@@ -21,14 +22,15 @@ def check_name_input(func):
 def main():
     coords_path = load_control_points()
 
+    directory = os.path.dirname(file_path_box.get('1.0', 'end').strip())
     filename = file_name.get()
-    file = "".join([filename, ".scr"])
+    file = os.path.join(directory, f"{filename}.scr")
 
-    with open(file, "w"):
+    with open(file, "w") as f:
         f.write("OSMODE 0 3DOSMODE 0\n")
         pass
     
-    with open(file_path_var.get(), "r") as excel:
+    with open(file_path_box.get('1.0', 'end').strip(), "r") as excel:
         number_of_points = 0
         controlPoints = list()
 
@@ -36,7 +38,7 @@ def main():
             number_of_points += 1
             try:
                 items = line.split(",")
-                pointID, x, y, z, layer = (items + [None] * 5)[:5]  # Fill missing values with None
+                pointID, x, y, z, layer = (items + [None] * 5)[:5]
                 coordinate = ",".join([x,y,z])
 
                 pointID = pointID.strip('" ')
@@ -81,7 +83,7 @@ def load_control_points():
         bundle_dir = sys._MEIPASS
         coords_path = os.path.join(bundle_dir, 'ALL_COORDS.txt')
     else:
-        coords_path = 'Data/ALL_COORDS.txt'
+        coords_path = 'Data\\ALL_COORDS.txt'
 
     return coords_path
 
@@ -106,17 +108,21 @@ def browse_file():
         filetypes=(("CSV and TXT Files", "*.csv *.txt"), ("All Files", "*.*"))
     )
     if filename and os.path.splitext(filename)[1].lower() in ['.csv', '.txt']:
-        print(f"Selected File: {filename}")
-        file_path_var.set(filename)
+        file_path_box.delete('1.0', 'end')
+        file_path_box.insert('1.0', filename)
         return
     else:
         messagebox.showwarning(title= "Wrong Input", message="Please choose a valid csv file.")
 
+def on_drop(event):
+    file_path_box.delete('1.0', 'end')
+    file_path_box.insert('1.0', event.data)
+    return
 
 def on_close():
     root.destroy()
 
-root = tk.Tk()
+root = TkinterDnD.Tk()
 root.title("Create Script File")
 
 title_label = tk.Label(root, text="Title of scr file:")
@@ -125,12 +131,15 @@ title_label.grid(row=0, column=0, padx=10, pady=5)
 file_name = tk.Entry(root, width=50)
 file_name.grid(row=0, column=1, padx=10, pady=5)
 
-file_path_var = tk.StringVar()
 file_path_label = tk.Label(root, text="Select .csv file:")
 file_path_label.grid(row=1, column=0, padx=10, pady=5)
 
-file_path_box = tk.Entry(root, textvariable=file_path_var, width=50)
+file_path_box = tk.Text(root, width=50, height=5, bg="lightgray", wrap='word')
+file_path_box.insert('1.0', "Drag and drop files here...")
 file_path_box.grid(row=1, column=1, padx=10, pady=5)
+
+file_path_box.drop_target_register(DND_FILES)
+file_path_box.dnd_bind('<<Drop>>', on_drop)
 
 browse_button = tk.Button(root, text="Browse", command=browse_file)
 browse_button.grid(row=1, column=2, padx=5, pady=5)
