@@ -21,16 +21,17 @@ def check_name_input(func):
 @check_name_input
 def main():
     coords_path = load_control_points()
+    clean_csv_path = file_path_box.get('1.0', 'end').strip().replace('{', '').replace('}', '')
 
-    directory = os.path.dirname(file_path_box.get('1.0', 'end').strip())
+    directory = os.path.dirname(clean_csv_path)
     filename = file_name.get()
     file = os.path.join(directory, f"{filename}.scr")
 
     with open(file, "w") as f:
         f.write("OSMODE 0 3DOSMODE 0\n")
         pass
-    
-    with open(file_path_box.get('1.0', 'end').strip(), "r") as excel:
+
+    with open(clean_csv_path, "r") as excel:
         number_of_points = 0
         controlPoints = list()
 
@@ -42,7 +43,7 @@ def main():
                 coordinate = ",".join([x,y,z])
 
                 pointID = pointID.strip('" ')
-                layer = layer.strip('" \n')
+                layer = layer.strip('" \n').replace(" ", "-")
             except Exception as e:
                 messagebox.showwarning(f"Error processing line: {line} - {e}")
                 on_close()
@@ -81,9 +82,10 @@ def load_control_points():
     if getattr(sys, "frozen", False):
         # If the script is frozen (converted to an .exe)
         bundle_dir = sys._MEIPASS
-        coords_path = os.path.join(bundle_dir, 'ALL_COORDS.txt')
     else:
-        coords_path = 'Data\\ALL_COORDS.txt'
+        bundle_dir = os.path.abspath(os.path.dirname(__file__))
+
+    coords_path = os.path.join(bundle_dir, 'Data', 'ALL_COORDS.txt')
 
     return coords_path
 

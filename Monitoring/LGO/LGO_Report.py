@@ -20,7 +20,7 @@ def main():
     wb = load_workbook(origin_entry.get(), data_only=True)
     num_of_lines = int(combobox.get())
 
-    LGORepeatTargets = ["LG1", "LG9", "LG10", "LG25", "LG26", "LG27", "LG28", "LG37", "LG39", "LG40", "LG41", "SKP46N"]
+    LGORepeatTargets = ["LG1", "LG3", "LG9", "LG25", "LG26", "LG27", "LG28", "LG37", "LG38", "LG41", "SKP46N", "PT2", "PT3"]
     all_targets_dict = dict()
 
     # Move to first sheet
@@ -51,7 +51,6 @@ def main():
         else:
             row = ws[last_non_empty_row]
             list_of_row_values = [cell.value for cell in row]
-            # date = list_of_row_values[1]
             all_targets_dict[i] = list_of_row_values
 
 
@@ -125,7 +124,7 @@ def main():
 def is_row_empty(row):
     """Check if a row contains only NaN or empty values."""
     for cell in row:
-        if cell.value not in (None, '', np.nan):  # Check for non-empty values
+        if cell.value not in (None, '', np.nan):
             return False
     return True
 

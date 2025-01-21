@@ -7,5 +7,7 @@ trig.txt
 *.csv
 *.xlsx
 *.scr
+*.png
+*.spec
 
 final.ipynb
