@@ -71,7 +71,7 @@ def main():
             with open(file, "a") as f:
                 f.write(layer_command)
                 f.write(f"POINT {coordinate}\n")
-                f.write(f"TEXT {coordinate} 0.4 100 {pointID}\n")
+                f.write(f"TEXT {text_offset(coordinate)} 0.4 100 {pointID}\n")
 
     report = f"Number of points: {number_of_points}\nControl points and it's coordinates: \n{controlPoints}\n" + coord_check
 
@@ -115,6 +115,16 @@ def browse_file():
         return
     else:
         messagebox.showwarning(title= "Wrong Input", message="Please choose a valid csv file.")
+
+def text_offset(coords):
+    try:
+        x, y, z = map(float, coords.split(","))
+        x += 0.4
+        y -= 0.2
+
+        return ",".join([str(x), str(y), str(z)])
+    except Exception as e:
+        messagebox.showwarning("Something went wrong with the coordinates. Check the .csv file.")
 
 def on_drop(event):
     file_path_box.delete('1.0', 'end')
