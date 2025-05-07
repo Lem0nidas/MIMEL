@@ -148,6 +148,7 @@ def browse_save_location():
     if filename:
         save_location_entry.delete(0, tk.END)
         save_location_entry.insert(0, filename)
+
 def on_origin_drop(event):
     file_path_box.delete('1.0', 'end')
     file_path_box.insert('1.0', event.data)
@@ -187,7 +188,6 @@ root.grid_rowconfigure(4, weight=1)
 root.grid_rowconfigure(5, weight=1)
 
 
-
 # Origin Excel
 origin_label = tk.Label(root, text="Origin Excel")
 origin_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -210,11 +210,6 @@ destination_path_box = tk.Text(root, width=40, height=3, bg="lightgray", wrap='w
 destination_path_box.insert('1.0', "Drag and drop files here...")
 destination_path_box.grid(row=1, column=1, padx=5, pady=5)
 destination_path_box.drop_target_register(DND_FILES)
-destination_path_box.dnd_bind('<<Drop>>', on_destination_drop)
-
-# Bind key release (typing)
-destination_path_box.bind("<KeyRelease>", autofill_save_location)
-# Bind drag-and-drop event
 destination_path_box.dnd_bind("<<Drop>>", lambda event: [on_destination_drop(event), autofill_save_location()])
 
 # Save Location

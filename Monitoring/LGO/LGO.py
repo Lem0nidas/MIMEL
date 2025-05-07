@@ -1,9 +1,10 @@
-
 import pandas as pd
 import numpy as np
+import os
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+from tkinterdnd2 import TkinterDnD, DND_FILES
 from tkcalendar import DateEntry
 
 from openpyxl import load_workbook
@@ -11,7 +12,6 @@ from openpyxl.styles import PatternFill
 
 from datetime import datetime
 from copy import copy
-
 
 
 def check_conditions(func):
@@ -36,9 +36,8 @@ def main():
     save_directory = save_location_entry.get() + "\\LGOUpdatedMonitoringResults.xlsx"
     wb.save(save_directory)
 
-
 def loadExcel():
-    RawFullPath = raw_data_entry.get()
+    RawFullPath = raw_data_box.get('1.0', 'end').strip().replace('{', '').replace('}', '')
 
     df = pd.read_excel(RawFullPath, header=None, index_col=0)
     df.columns = ['X', 'Y', 'Z']
@@ -46,8 +45,6 @@ def loadExcel():
     df.index = df.index.map(lambda x: x.upper() if isinstance(x, str) else x)
 
     return df
-
-
 
 def copy_to_equations_excel(rawData):
     global wb
@@ -58,7 +55,7 @@ def copy_to_equations_excel(rawData):
 
     LGORepeatTargets = ["LG25", "LG26", "LG41", "LG42", "LG43", "LG44", "LG45", "LG46", "LG47", "LG48", "LG49", "PT2", "PT3"]
 
-    excel_file_path = excel_entry.get()
+    excel_file_path = excel_path_box.get('1.0', 'end').strip().replace('{', '').replace('}', '')
     measurementTime = combobox.get()
     dates = listbox.get(0, tk.END)
 
@@ -218,18 +215,17 @@ def is_row_empty(row):
             return False
     return True
 
-
 def browse_raw_data():
     filename = filedialog.askopenfilename(title="Select Raw Data File")
     if filename:
-        raw_data_entry.delete(0, tk.END)
-        raw_data_entry.insert(0, filename)
+        raw_data_box.delete('1.0', 'end')
+        raw_data_box.insert('1.0', filename)
 
 def browse_excel():
     filename = filedialog.askopenfilename(title="Select Excel File")
     if filename:
-        excel_entry.delete(0, tk.END)
-        excel_entry.insert(0, filename)
+        excel_path_box.delete('1.0', 'end')
+        excel_path_box.insert('1.0', filename)
 
 def browse_save_location():
     filename = filedialog.askdirectory(title="Select Save Location")
@@ -237,12 +233,10 @@ def browse_save_location():
         save_location_entry.delete(0, tk.END)
         save_location_entry.insert(0, filename)
 
-
 def remove_selected(event):
     selected_index = listbox.curselection()
     if selected_index:
         listbox.delete(selected_index)
-
 
 def add_date_to_listbox(event):
     selected_date = date_entry.get()
@@ -253,11 +247,25 @@ def add_date_to_listbox(event):
     if formatted_date not in listbox.get(0, tk.END):
         listbox.insert(tk.END, formatted_date)
 
+def on_origin_drop(event):
+    raw_data_box.delete('1.0', 'end')
+    raw_data_box.insert('1.0', event.data)
+    return
+
+def on_destination_drop(event):
+    excel_path_box.delete('1.0', 'end')
+    excel_path_box.insert('1.0', event.data)
+    return
+
+def autofill_save_location(event=None):
+    destination_text = excel_path_box.get("1.0", "end").strip().replace('{', '').replace('}', '')
+    folder_path = os.path.dirname(destination_text)
+    save_location_entry.delete(0, "end")
+    save_location_entry.insert(0, folder_path)
 
 
-root = tk.Tk()
+root = TkinterDnD.Tk()
 root.title("Update Excel file with equations.")
-
 
 root.geometry("800x300")
 
@@ -272,22 +280,31 @@ root.grid_rowconfigure(4, weight=1)
 root.grid_rowconfigure(5, weight=1)
 
 
+# Raw Data
 raw_data_label = tk.Label(root, text="Raw Data File Path")
 raw_data_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-raw_data_entry = tk.Entry(root, width=50)
-raw_data_entry.grid(row=0, column=1, padx=10, pady=10, sticky="we")
 raw_data_button = tk.Button(root, text="Browse", command=browse_raw_data)
 raw_data_button.grid(row=0, column=2, padx=10, pady=10)
 
+raw_data_box = tk.Text(root, width=40, height=3, bg="lightgray", wrap='word')
+raw_data_box.insert('1.0', "Drag and drop files here...")
+raw_data_box.grid(row=0, column=1, padx=5, pady=5)
+raw_data_box.drop_target_register(DND_FILES)
+raw_data_box.dnd_bind('<<Drop>>', on_origin_drop)
 
+# Destination Excel
 excel_label = tk.Label(root, text="Excel File Path")
 excel_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-excel_entry = tk.Entry(root, width=50)
-excel_entry.grid(row=1, column=1, padx=10, pady=10, sticky="we")
-excel_button = tk.Button(root, text="Browse", command=browse_excel)
+excel_button = tk.Button(root, text="Browse", command=lambda: [browse_excel(), autofill_save_location()])
 excel_button.grid(row=1, column=2, padx=10, pady=10)
 
+excel_path_box = tk.Text(root, width=40, height=3, bg="lightgray", wrap='word')
+excel_path_box.insert('1.0', "Drag and drop files here...")
+excel_path_box.grid(row=1, column=1, padx=5, pady=5)
+excel_path_box.drop_target_register(DND_FILES)
+excel_path_box.dnd_bind("<<Drop>>", lambda event: [on_destination_drop(event), autofill_save_location()])
 
+# Save Location
 save_location_label = tk.Label(root, text="Save Location")
 save_location_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 save_location_entry = tk.Entry(root, width=50)
@@ -296,17 +313,16 @@ save_location_button = tk.Button(
     root, text="Browse", command=browse_save_location)
 save_location_button.grid(row=2, column=2, padx=10, pady=10)
 
-
+# Date
 date_label = tk.Label(root, text="Select Date")
 date_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 date_entry = DateEntry(root, width=12, background='darkblue',
                        foreground='white', borderwidth=2)
 date_entry.grid(row=3, column=1, padx=10, pady=10, sticky="we")
 
-
-listbox = tk.Listbox(root, height=3, width=10)
+# Time
+listbox = tk.Listbox(root, height=2, width=10)
 listbox.grid(row=3, column=2, padx=10, pady=10, sticky="we")
-
 
 measuringTime = ["09:00", "12:00", "15:00"]
 dropdown_label = tk.Label(root, text="Time of measurement")
@@ -315,19 +331,15 @@ combobox = ttk.Combobox(root, values=measuringTime, width=20)
 combobox.grid(row=4, column=1, padx=10, pady=10, sticky="we")
 combobox.set("Select an option")
 
-
 date_entry.bind("<<DateEntrySelected>>", add_date_to_listbox)
-
-
 listbox.bind("<Double-Button-1>", remove_selected)
 
-
+# Execution and Cancel buttons
 execute_button = tk.Button(root, text="Execute", command=main)
 execute_button.grid(row=5, column=1, padx=10, pady=10, sticky="e")
-
 
 cancel_button = tk.Button(root, text="Cancel", command=root.quit)
 cancel_button.grid(row=5, column=2, padx=10, pady=10, sticky="w")
 
-
+# Run the application
 root.mainloop()
