@@ -1,9 +1,10 @@
-
-from openpyxl import load_workbook
-import numpy as np
 from copy import copy
-import tkinter as tk
+from openpyxl import load_workbook
 from tkinter import filedialog, messagebox, ttk
+
+import numpy as np
+import tkinter as tk
+import win32com.client
 
 
 def check_conditions(func):
@@ -20,7 +21,7 @@ def main():
     wb = load_workbook(origin_entry.get(), data_only=True)
     num_of_lines = int(combobox.get())
 
-    LGORepeatTargets = ["LG1", "LG3", "LG9", "LG25", "LG26", "LG27", "LG28", "LG37", "LG38", "LG41", "SKP46N", "PT2", "PT3"]
+    LGORepeatTargets = ["LG25", "LG26", "LG41", "LG42", "LG43", "LG44", "LG45", "LG46", "LG47", "LG48", "LG49", "PT2", "PT3"]
     all_targets_dict = dict()
 
     # Move to first sheet
@@ -88,8 +89,8 @@ def main():
 
                     if cell.has_style:
                         new_cell.font = copy(cell.font)
-                        new_cell.border = copy(cell.border)
                         new_cell.fill = copy(cell.fill)
+                        new_cell.border = copy(cell.border)
                         new_cell.number_format = copy(cell.number_format)
                         new_cell.protection = copy(cell.protection)
                         new_cell.alignment = copy(cell.alignment)
@@ -111,8 +112,8 @@ def main():
 
                     if cell.has_style:
                         new_cell.font = copy(cell.font)
-                        new_cell.border = copy(cell.border)
                         new_cell.fill = copy(cell.fill)
+                        new_cell.border = copy(cell.border)
                         new_cell.number_format = copy(cell.number_format)
                         new_cell.protection = copy(cell.protection)
                         new_cell.alignment = copy(cell.alignment)
@@ -150,8 +151,6 @@ def browse_save_location():
 # Create the main window
 root = tk.Tk()
 root.title("Update Excel file with equations.")
-messagebox.showinfo(title="Reminder", message="Before you copy data to excel file, make sure you have a copy of that excel stored somewhere!")
-
 
 # Set geometry
 root.geometry("800x300")
@@ -195,7 +194,7 @@ save_location_button = tk.Button(
 save_location_button.grid(row=2, column=2, padx=10, pady=10)
 
 # Create a Combobox with a few options
-monitoringAreas = ["1", "2", "3", "4", "5", "6", "7", "8"]
+monitoringAreas = ["1", "2", "3", "4", "5", "6"]
 dropdown_label = tk.Label(root, text="Number of dates/measurements")
 dropdown_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
 combobox = ttk.Combobox(root, values=monitoringAreas, width=20)

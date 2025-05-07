@@ -56,7 +56,7 @@ def copy_to_equations_excel(rawData):
     global dates
     global LGORepeatTargets
 
-    LGORepeatTargets = ["LG1", "LG3", "LG9", "LG25", "LG26", "LG27", "LG28", "LG37", "LG38", "LG41", "SKP46N", "PT2", "PT3"]
+    LGORepeatTargets = ["LG25", "LG26", "LG41", "LG42", "LG43", "LG44", "LG45", "LG46", "LG47", "LG48", "LG49", "PT2", "PT3"]
 
     excel_file_path = excel_entry.get()
     measurementTime = combobox.get()
@@ -109,10 +109,6 @@ def first_measurement(rawData):
 
         except KeyError as e:
             destroyed_targets_list.append(e.args[0])
-
-            for date in dates:
-                add_destroyed_target(last_non_empty_row, date)
-                last_non_empty_row += 1
         except Exception as e:
             messagebox.showinfo(title="Error", message=f"An unknown error occured. \nMake sure you upload the correct files. Additionally check that the excel files have the correct format.")
     return
@@ -151,10 +147,6 @@ def repeats(rawData):
 
         except KeyError as e:
             destroyed_targets_list.append(e.args[0])
-
-            for date in dates:
-                add_destroyed_target(last_non_empty_row, date)
-                last_non_empty_row += 1
         except Exception as e:
             messagebox.showinfo(title="Error", message=f"An unknown error occured. \nMake sure you upload the correct files. Additionally check that the excel files have the correct format.")
             break
@@ -168,15 +160,16 @@ def process_day(x, y, z, last_non_empty_row, date, target):
     for col in range(1, ws.max_column + 1):
         cell = ws.cell(row=lastRow, column=col)
         new_cell = ws.cell(row=newRow, column=col)
+        same_time_cell = ws.cell(row=lastRow - 2, column=col)
 
         if cell.data_type == 'f':
             new_formula = None
             match measurementTime:
-                case "09:00" if col == 8 and target in LGORepeatTargets:
+                case "09:00" if col == 10 and target in LGORepeatTargets:
                     new_formula = cell.value.replace(str(lastRow), str(newRow)).replace(str(lastRow - 3), str(lastRow))
-                case "12:00" if col == 8 and target in LGORepeatTargets:
+                case "12:00" if col == 10 and target in LGORepeatTargets:
                     new_formula = cell.value.replace(str(lastRow), str(newRow))
-                case "12:00" if col == 8 and target in LGORepeatTargets:
+                case "15:00" if col == 10 and target in LGORepeatTargets:
                     new_formula = cell.value.replace(str(lastRow), str(newRow))
 
             if new_formula is None:
@@ -187,7 +180,7 @@ def process_day(x, y, z, last_non_empty_row, date, target):
 
             if new_formula is not None:
                 new_cell.value = new_formula
-        
+
         elif col == 1:
             new_cell.value = int(cell.value) + 1
         elif col == 2 and target not in destroyed_targets_list:
@@ -198,58 +191,25 @@ def process_day(x, y, z, last_non_empty_row, date, target):
             new_cell.value = cell.value
 
         if cell.has_style:
-            new_cell.font = copy(cell.font)
+            new_cell.font = copy(same_time_cell.font)
+            new_cell.fill = copy(same_time_cell.fill)
             new_cell.border = copy(cell.border)
             new_cell.number_format = copy(cell.number_format)
             new_cell.protection = copy(cell.protection)
             new_cell.alignment = copy(cell.alignment)
 
             match measurementTime:
-                case "09:00" if col == 8 and target in LGORepeatTargets:
-                    new_cell.fill = PatternFill(start_color="DDD9C4", end_color="DDD9C4", fill_type="solid")
-                case "09:00" if col == 14 and target in LGORepeatTargets:
+                case "09:00" if col == 15 and target in LGORepeatTargets:
                     new_cell.value = "TPS MEAS/1st ROUND"
-                case "12:00" if col == 8 and target in LGORepeatTargets:
-                    new_cell.fill = PatternFill(start_color="E6B8B7", end_color="E6B8B7", fill_type="solid")
-                case "12:00" if col == 14 and target in LGORepeatTargets:
+                case "12:00" if col == 15 and target in LGORepeatTargets:
                     new_cell.value = "TPS MEAS/2nd ROUND"
-                case "15:00" if col == 8 and target in LGORepeatTargets:
-                    new_cell.fill = PatternFill(start_color="E4DFEC", end_color="E4DFEC", fill_type="solid")
-                case "15:00" if col == 14 and target in LGORepeatTargets:
+                case "15:00" if col == 15 and target in LGORepeatTargets:
                     new_cell.value = "TPS MEAS/3nd ROUND"
 
     for col, new_value in zip([4, 5, 6], [x, y, z]):
         ws.cell(row=newRow, column=col).value = new_value
 
     return
-
-def add_destroyed_target(last_non_empty_row, date):
-    lastRow = last_non_empty_row
-    newRow = lastRow + 1
-    ws.insert_rows(newRow)
-
-
-    for col in range(1, ws.max_column + 1):
-        cell = ws.cell(row=lastRow, column=col)
-        new_cell = ws.cell(row=newRow, column=col)
-
-        if col == 1:
-            new_cell.value = int(cell.value) + 1
-        elif col == 2:
-            new_cell.value = datetime.strptime(date, "%d/%m/%y").date()
-        else: 
-            new_cell.value = ""
-
-        if cell.has_style:
-            new_cell.font = copy(cell.font)
-            new_cell.border = copy(cell.border)
-            new_cell.fill = copy(cell.fill)
-            new_cell.number_format = copy(cell.number_format)
-            new_cell.protection = copy(cell.protection)
-            new_cell.alignment = copy(cell.alignment)
-    
-    return
-
 
 def is_row_empty(row):
     """Check if a row contains only NaN or empty values."""
