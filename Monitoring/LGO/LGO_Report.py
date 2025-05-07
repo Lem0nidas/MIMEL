@@ -1,16 +1,17 @@
 from copy import copy
 from openpyxl import load_workbook
 from tkinter import filedialog, messagebox, ttk
+from tkinterdnd2 import TkinterDnD, DND_FILES
 
+import os
 import numpy as np
 import tkinter as tk
-import win32com.client
 
 
 def check_conditions(func):
     def wrapper(*args, **kwargs):
         if (combobox.get() == "Select an option"):
-            messagebox.showwarning(title= "Wrong Input", message="Please choose an option from DropDown list (Monitoring Area)")
+            messagebox.showwarning(title= "Wrong Input", message="Please choose an option from DropDown list (Number of measurements)")
             return
         return func(*args, **kwargs)
     return wrapper
@@ -18,7 +19,8 @@ def check_conditions(func):
 
 @check_conditions
 def main():
-    wb = load_workbook(origin_entry.get(), data_only=True)
+    clean_file_path = file_path_box.get('1.0', 'end').strip().replace('{', '').replace('}', '')
+    wb = load_workbook(clean_file_path, data_only=True)
     num_of_lines = int(combobox.get())
 
     LGORepeatTargets = ["LG25", "LG26", "LG41", "LG42", "LG43", "LG44", "LG45", "LG46", "LG47", "LG48", "LG49", "PT2", "PT3"]
@@ -58,8 +60,8 @@ def main():
     wb.close()
 
     #############
-
-    wb = load_workbook(destination_entry.get())
+    clean_destination_path = destination_path_box.get('1.0', 'end').strip().replace('{', '').replace('}', '')
+    wb = load_workbook(clean_destination_path)
 
     # Move to first sheet
     sheets = wb.sheetnames
@@ -132,24 +134,42 @@ def is_row_empty(row):
 def browse_origin_excel():
     filename = filedialog.askopenfilename(title="Select Raw Data File")
     if filename:
-        origin_entry.delete(0, tk.END)
-        origin_entry.insert(0, filename)
+        file_path_box.delete('1.0', 'end')
+        file_path_box.insert('1.0', filename)
 
 def browse_destination_excel():
     filename = filedialog.askopenfilename(title="Select Excel File")
     if filename:
-        destination_entry.delete(0, tk.END)
-        destination_entry.insert(0, filename)
+        destination_path_box.delete('1.0', 'end')
+        destination_path_box.insert('1.0', filename)
 
 def browse_save_location():
     filename = filedialog.askdirectory(title="Select Save Location")
     if filename:
         save_location_entry.delete(0, tk.END)
         save_location_entry.insert(0, filename)
+def on_origin_drop(event):
+    file_path_box.delete('1.0', 'end')
+    file_path_box.insert('1.0', event.data)
+    return
 
+def on_destination_drop(event):
+    destination_path_box.delete('1.0', 'end')
+    destination_path_box.insert('1.0', event.data)
+    return
+
+def autofill_save_location(event=None):
+    destination_text = destination_path_box.get("1.0", "end").strip().replace('{', '').replace('}', '')
+    folder_path = os.path.dirname(destination_text)
+    save_location_entry.delete(0, "end")
+    save_location_entry.insert(0, folder_path)
+
+
+def on_close():
+    root.destroy()
 
 # Create the main window
-root = tk.Tk()
+root = TkinterDnD.Tk()
 root.title("Update Excel file with equations.")
 
 # Set geometry
@@ -170,46 +190,58 @@ root.grid_rowconfigure(5, weight=1)
 
 # Origin Excel
 origin_label = tk.Label(root, text="Origin Excel")
-origin_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-origin_entry = tk.Entry(root, width=50)
-origin_entry.grid(row=0, column=1, padx=10, pady=10, sticky="we")
+origin_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 origin_button = tk.Button(root, text="Browse", command=browse_origin_excel)
-origin_button.grid(row=0, column=2, padx=10, pady=10)
+origin_button.grid(row=0, column=2, padx=5, pady=5)
+
+file_path_box = tk.Text(root, width=40, height=3, bg="lightgray", wrap='word')
+file_path_box.insert('1.0', "Drag and drop files here...")
+file_path_box.grid(row=0, column=1, padx=5, pady=5)
+file_path_box.drop_target_register(DND_FILES)
+file_path_box.dnd_bind('<<Drop>>', on_origin_drop)
 
 # Destination Excel
 destination_label = tk.Label(root, text="Destination Excel")
-destination_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-destination_entry = tk.Entry(root, width=50)
-destination_entry.grid(row=1, column=1, padx=10, pady=10, sticky="we")
-destination_button = tk.Button(root, text="Browse", command=browse_destination_excel)
-destination_button.grid(row=1, column=2, padx=10, pady=10)
+destination_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+destination_button = tk.Button(root, text="Browse", command=lambda: [browse_destination_excel(), autofill_save_location()])
+destination_button.grid(row=1, column=2, padx=5, pady=5)
+
+destination_path_box = tk.Text(root, width=40, height=3, bg="lightgray", wrap='word')
+destination_path_box.insert('1.0', "Drag and drop files here...")
+destination_path_box.grid(row=1, column=1, padx=5, pady=5)
+destination_path_box.drop_target_register(DND_FILES)
+destination_path_box.dnd_bind('<<Drop>>', on_destination_drop)
+
+# Bind key release (typing)
+destination_path_box.bind("<KeyRelease>", autofill_save_location)
+# Bind drag-and-drop event
+destination_path_box.dnd_bind("<<Drop>>", lambda event: [on_destination_drop(event), autofill_save_location()])
 
 # Save Location
 save_location_label = tk.Label(root, text="Save Location")
-save_location_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-save_location_entry = tk.Entry(root, width=50)
-save_location_entry.grid(row=2, column=1, padx=10, pady=10, sticky="we")
+save_location_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+save_location_entry = tk.Entry(root, width=30, readonlybackground="lightgray")
+save_location_entry.grid(row=2, column=1, padx=5, pady=5, sticky="we")
 save_location_button = tk.Button(
     root, text="Browse", command=browse_save_location)
-save_location_button.grid(row=2, column=2, padx=10, pady=10)
+save_location_button.grid(row=2, column=2, padx=5, pady=5)
 
 # Create a Combobox with a few options
 monitoringAreas = ["1", "2", "3", "4", "5", "6"]
 dropdown_label = tk.Label(root, text="Number of dates/measurements")
-dropdown_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
-combobox = ttk.Combobox(root, values=monitoringAreas, width=20)
-combobox.grid(row=4, column=1, padx=10, pady=10, sticky="we")
+dropdown_label.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+combobox = ttk.Combobox(root, values=monitoringAreas, width=30)
+combobox.grid(row=4, column=1, padx=5, pady=5, sticky="we")
 combobox.set("Select an option")  # Default text
-
-
 
 # Execution and Cancel buttons
 execute_button = tk.Button(root, text="Execute", command=main)
-execute_button.grid(row=5, column=1, padx=10, pady=10, sticky="e")
+execute_button.grid(row=5, column=1, padx=5, pady=5, sticky="e")
 
 cancel_button = tk.Button(root, text="Cancel", command=root.quit)
-cancel_button.grid(row=5, column=2, padx=10, pady=10, sticky="w")
+cancel_button.grid(row=5, column=2, padx=5, pady=5, sticky="w")
 
+root.protocol("WM_DELETE_WINDOW", on_close)
 
 # Run the application
 root.mainloop()

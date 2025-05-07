@@ -165,7 +165,3 @@ cancel_button.grid(row=2, column=2, pady=10)
 root.protocol("WM_DELETE_WINDOW", on_close)
 
 root.mainloop()
-
-
-# if __name__ == "__main__":
-#     main()
